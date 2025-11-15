@@ -7,11 +7,18 @@
 body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+  color: #f8fafc; 
+}
+
+html[data-bs-theme="dark"] .form-control,
+html[data-bs-theme="dark"] .form-select {
+    background-color: rgba(0, 0, 0, 0.2);
+    border-color: rgba(255, 255, 255, 0.1);
 }
 
 .sidebar {
   background: linear-gradient(180deg, #0f172a 0%, #0c0e1a 100%);
-  max-width: 380px; /* Fixed width on desktop */
+  max-width: 380px;
 }
 
 .key-value {
@@ -25,7 +32,7 @@ body {
   line-height: 1.6;
   border: 1px solid rgba(255, 255, 255, 0.08);
   min-height: 60px;
-  white-space: pre-wrap; /* Preserve key formatting */
+  white-space: pre-wrap;
 }
 
 .key-value.private {
@@ -33,20 +40,44 @@ body {
   border-color: rgba(252, 165, 165, 0.2);
 }
 
+.recipient-info {
+  background-color: rgba(255, 255, 255, 0.05) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  color: #9ca3af;
+}
+
 .recipient-info code {
-  background: rgba(16, 185, 129, 0.08);
+  background: rgba(16, 185, 129, 0.1);
   padding: 2px 6px;
   border-radius: 4px;
   font-family: 'Courier New', monospace;
   font-size: 11px;
-  color: #10b981;
+  color: #34d399;
   word-break: break-all;
 }
 
-/* Messages custom */
+.chat-header {
+  background-color: #0f172a;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.chat-compose-area {
+  background-color: #0f172a;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.messages-area {
+  background: #111827;
+}
+
 .message.received {
   max-width: 70%;
   align-self: flex-start !important;
+  background: #334155; 
+  color: #f1f5f9;       
+  padding: 10px 15px;      
+  border-radius: 18px;    
+  line-height: 1.5;
 }
 
 .message.sent {
@@ -54,11 +85,31 @@ body {
   align-self: flex-end !important;
   background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
   color: white !important;
+  padding: 10px 15px;      
+  border-radius: 18px;     
+  line-height: 1.5;
 }
 
-.messages-area {
-  background: #f8fafc;
+.message.received.card,
+.message.received.card * {
+  background-color: #334155 !important;
+  color: #f1f5f9 !important;
 }
+
+.message.sent.card,
+.message.sent.card * {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+  color: #ffffff !important;
+}
+
+.message .message-content {
+  color: inherit !important;
+}
+.message .small,
+.message small {
+  color: rgba(255,255,255,0.85) !important;
+}
+
 
 #inbox > .card {
   animation: slideIn 0.3s ease;
@@ -69,17 +120,23 @@ body {
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* Scrollbar custom */
 .messages-area::-webkit-scrollbar {
-  width: 6px;
+  width: 8px;
+}
+
+.messages-area::-webkit-scrollbar-track {
+  background: transparent; 
 }
 
 .messages-area::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.2);
-  border-radius: 3px;
+  background: #4b5563; 
+  border-radius: 4px;
 }
 
-/* Hide offcanvas on desktop */
+.messages-area::-webkit-scrollbar-thumb:hover {
+  background: #6b7280; 
+}
+
 @media (min-width: 768px) {
   #sidebarOffcanvas {
     position: relative !important;
@@ -99,5 +156,4 @@ body {
   }
 }
 
-/* Utilities */
 .hidden { display: none !important; }
