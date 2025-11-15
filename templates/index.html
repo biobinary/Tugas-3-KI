@@ -3,101 +3,135 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>DES Chat with RSA Key Distribution</title>
+  <title>Secure Chat - DES with RSA</title>
   <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
-  <script src="/static/script.js" defer></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/static/style.css">
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <script src="/static/script.js" defer></script>
 </head>
-
 <body>
-  <div class="app-wrapper">
+  <div class="container">
+    <!-- Sidebar -->
     <div class="sidebar">
       <div class="sidebar-header">
-        <i class="fas fa-shield-alt"></i>
-        <h2>Secure Chat</h2>
-      </div>
-      
-      <div id="login-sidebar" class="login-panel">
-        <div class="form-group">
-          <label for="username"><i class="fas fa-user"></i> Username</label>
-          <input id="username" placeholder="Masukkan username Anda" autocomplete="username" required/>
-        </div>
-        
-        <button id="btnRegister" class="btn-primary">
-          <i class="fas fa-key"></i> Register & Generate Keys
-        </button>
-
-        <div class="info-panel">
-          <h4><i class="fas fa-lightbulb"></i> Flow:</h4>
-          <ol>
-            <li>User gets RSA key pair (public & private)</li>
-            <li>Public keys shared with all users</li>
-            <li>Server generates random DES key per message</li>
-            <li>DES key encrypted with recipient's RSA public</li>
-            <li>Message encrypted with DES</li>
-            <li>Recipient decrypts DES key with private RSA</li>
-            <li>Recipient decrypts message with DES key</li>
-          </ol>
-        </div>
+        <h1>
+          <span class="icon">🔒</span>
+          Secure Chat
+        </h1>
       </div>
 
-      <div id="keys-sidebar" style="display:none;" class="keys-panel">
-        <h3><i class="fas fa-key"></i> Your Keys</h3>
-        <div class="key-item">
-          <label><i class="fas fa-unlock"></i> Public Key (e,n):</label>
-          <div class="key-display" id="publicKeyDisplay">
-            <button class="copy-btn" onclick="copyToClipboard('publicKeyDisplay')"><i class="fas fa-copy"></i></button>
+      <div class="sidebar-content">
+        <!-- Login Form -->
+        <div id="login-section" class="login-form">
+          <div class="form-group">
+            <label>Username</label>
+            <input id="username" type="text" placeholder="Enter your username" autocomplete="username">
+          </div>
+          
+          <button id="btnRegister">
+            🔑 Register & Generate Keys
+          </button>
+
+          <div class="info-box">
+            <h4>🔐 How It Works</h4>
+            <ol>
+              <li>Get RSA key pair (public & private)</li>
+              <li>Public keys shared with all users</li>
+              <li>Random DES key per message</li>
+              <li>DES key encrypted with RSA</li>
+              <li>Message encrypted with DES</li>
+              <li>Decrypt with your private key</li>
+            </ol>
           </div>
         </div>
-        <div class="key-item">
-          <label><i class="fas fa-lock"></i> Private Key (d,n):</label>
-          <div class="key-display secure" id="privateKeyDisplay">
-            <button class="copy-btn" onclick="copyToClipboard('privateKeyDisplay')"><i class="fas fa-copy"></i></button>
+
+        <!-- Keys Section -->
+        <div id="keys-section" class="keys-section hidden">
+          <div class="key-card">
+            <h3>🔓 Public Key</h3>
+            <div class="key-value" id="publicKeyDisplay">
+              <button class="copy-btn" onclick="copyKey('publicKeyDisplay')">📋 Copy</button>
+            </div>
           </div>
-        </div>
-        <small class="warning-text">⚠️ Private key stays in your browser only!</small>
-        
-        <div class="user-info">
-          <i class="fas fa-user-circle"></i>
-          <strong id="me"></strong> <span class="status-badge online">ONLINE</span>
+
+          <div class="key-card">
+            <h3>🔐 Private Key</h3>
+            <div class="key-value private" id="privateKeyDisplay">
+              <button class="copy-btn" onclick="copyKey('privateKeyDisplay')">📋 Copy</button>
+            </div>
+            <small style="color: #fc8181; font-size: 11px; margin-top: 8px; display: block;">⚠️ Keep this private!</small>
+          </div>
+
+          <div class="user-badge">
+            <div class="user-avatar" id="userAvatar">U</div>
+            <div class="user-info">
+              <strong id="me">Username</strong>
+              <small>● Online</small>
+            </div>
+          </div>
+
           <button id="btnLogout" class="btn-secondary">
-            <i class="fas fa-sign-out-alt"></i> Logout
+            🚪 Logout
           </button>
         </div>
       </div>
     </div>
 
-    <div class="main-content">
-      <div id="chat" style="display:none;">
+    <!-- Main Chat Area -->
+    <div class="main-area">
+      <div id="chat-section" class="hidden" style="display: flex; flex-direction: column; height: 100%;">
         <div class="chat-header">
-          <h3><i class="fas fa-users"></i> Active Users</h3>
-          <select id="users" class="user-select"></select>
-          <div id="recipientKeyDisplay" class="recipient-info"></div>
+          <h2>💬 Messages</h2>
+          
+          <div class="recipient-select">
+            <div class="form-group" style="margin: 0;">
+              <label>Send To</label>
+              <select id="users"></select>
+            </div>
+            <div id="recipientKeyDisplay" class="recipient-info"></div>
+          </div>
         </div>
 
-        <div class="messages-container">
-          <div id="inbox" class="chat-messages"></div>
+        <div class="messages-area" id="messagesArea">
+          <div id="inbox"></div>
         </div>
 
         <div class="compose-area">
-          <div class="form-group">
-            <label for="message"><i class="fas fa-comment-dots"></i> Message</label>
-            <textarea id="message" rows="3" placeholder="Type your secure message... (Ctrl+Enter to send)"></textarea>
+          <div class="compose-form">
+            <div class="form-group" style="margin: 0;">
+              <label>Your Message</label>
+              <textarea id="message" placeholder="Type your message... (Ctrl+Enter to send)"></textarea>
+            </div>
+            <button id="btnSend" class="send-btn">
+              📤 Send
+            </button>
           </div>
-          <button id="btnSend" class="btn-primary">
-            <i class="fas fa-paper-plane"></i> Encrypt & Send
-          </button>
         </div>
+      </div>
+
+      <div id="empty-state" class="empty-state">
+        <div class="icon">🔒</div>
+        <h3>Welcome to Secure Chat</h3>
+        <p>Please register to start chatting securely</p>
       </div>
     </div>
   </div>
 
   <script>
-    function copyToClipboard(elementId) {
-      const text = document.getElementById(elementId).textContent.trim();
+    function copyKey(elementId) {
+      const element = document.getElementById(elementId);
+      const button = element.querySelector('.copy-btn');
+      const text = Array.from(element.childNodes)
+        .filter(node => node.nodeType === Node.TEXT_NODE)
+        .map(node => node.textContent.trim())
+        .join('');
+      
       navigator.clipboard.writeText(text).then(() => {
-        alert('Copied to clipboard!');
+        const originalText = button.innerHTML;
+        button.innerHTML = '✅ Copied!';
+        setTimeout(() => {
+          button.innerHTML = originalText;
+        }, 2000);
       });
     }
   </script>
