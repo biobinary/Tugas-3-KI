@@ -1,5 +1,8 @@
 import eventlet
 from DES import encrypt_buffer, decrypt_buffer, pad_text
+from RSA import generate_keypair, encrypt_rsa, decrypt_rsa, key_to_string, string_to_key
+import secrets
+import string
 
 eventlet.monkey_patch()
 
@@ -12,36 +15,52 @@ socketio = SocketIO(app, cors_allowed_origins="*")
 
 users = {}
 
+def generate_random_key(length=8):
+    chars = string.ascii_letters + string.digits
+    return ''.join(secrets.choice(chars) for _ in range(length))
+
 @app.route('/')
 def index():
     return render_template('index.html')
 
 @socketio.on('register')
 def handle_register(data):
-    
     username = data.get('username')
-    key = data.get('key')
     sid = request.sid
     
-    if not username or not key:
-        emit('register_response', {'ok': False, 'error': 'username & key required'})
+    if not username:
+        emit('register_response', {'ok': False, 'error': 'username required'})
         return
     
     if username in users:
         emit('register_response', {'ok': False, 'error': 'username already taken'})
         return
 
-    key_fixed = pad_text(key)[:8]
-
-    users[username] = {'sid': sid, 'key': key_fixed}
+    print(f"[REGISTER] Generating RSA keypair for {username}...")
+    public_key, private_key = generate_keypair(bits=16)
+    
+    users[username] = {
+        'sid': sid,
+        'public_key': public_key,
+        'private_key': private_key
+    }
+    
     join_room(username)
-    socketio.emit('users', list(users.keys()))
-    emit('register_response', {'ok': True})
+    
+    broadcast_users()
+    
+    emit('register_response', {
+        'ok': True,
+        'public_key': key_to_string(public_key),
+        'private_key': key_to_string(private_key)
+    })
 
     print(f"[REGISTER] {username} (sid={sid})")
+    print(f"  Public Key: {public_key}")
 
-@socketio.on('send_plain') 
-def handle_send_plain(data):
+@socketio.on('send_message') 
+def handle_send_message(data):
+
     frm = data.get('from')
     to = data.get('to')
     plaintext = data.get('message')
@@ -54,27 +73,38 @@ def handle_send_plain(data):
         emit('send_ack', {'ok': False, 'error': 'sender/recipient offline or unknown'})
         return
     
-    sender_key = users[frm]['key']
-    ciphertext = encrypt_buffer(plaintext, sender_key)
+    des_key = generate_random_key(8)
+    print(f"[ENCRYPT] Generated DES key: {des_key}")
     
-    recv_key = users[to]['key']
-    try:
-        decrypted = decrypt_buffer(ciphertext, recv_key) 
-    except Exception as e:
-        decrypted = "(decrypt failed on server)"
-
+    recipient_public_key = users[to]['public_key']
+    encrypted_des_key = encrypt_rsa(des_key, recipient_public_key)
+    print(f"[ENCRYPT] Encrypted DES key with recipient's public key")
+    
+    ciphertext = encrypt_buffer(plaintext, des_key)
+    print(f"[ENCRYPT] Encrypted message with DES")
+    
     socketio.emit('receive_message', {
         'from': frm,
+        'encrypted_key': encrypted_des_key,
         'ciphertext': ciphertext,
-        'plaintext': decrypted
+        'plaintext': None
     }, room=to)
 
-    emit('send_ack', {'ok': True, 'ciphertext': ciphertext})
+    emit('send_ack', {'ok': True})
     print(f"[RELAY] {frm} -> {to} (cipher len={len(ciphertext)})")
+
+def broadcast_users():
+    user_list = []
+    for username, info in users.items():
+        user_list.append({
+            'username': username,
+            'public_key': key_to_string(info['public_key'])
+        })
+    
+    socketio.emit('users', user_list)
 
 @socketio.on('disconnect')
 def handle_disconnect():
-    
     sid = request.sid
     removed = None
     
@@ -87,7 +117,7 @@ def handle_disconnect():
     if removed:
         print(f"[DISCONNECT] {removed}")
     
-    socketio.emit('users', list(users.keys()))
+    broadcast_users()
 
 if __name__ == '__main__':
     socketio.run(app, host='0.0.0.0', port=5000, debug=True)
