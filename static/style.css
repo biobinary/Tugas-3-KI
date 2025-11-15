@@ -67,7 +67,6 @@ body {
   overflow-y: auto;
 }
 
-/* Login Form */
 .login-form {
   display: flex;
   flex-direction: column;
@@ -143,7 +142,6 @@ button:active {
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
 }
 
-/* Info Box */
 .info-box {
   background: rgba(16, 185, 129, 0.12);
   border-left: 3px solid #10b981;
@@ -517,33 +515,309 @@ textarea:focus {
 @media (max-width: 968px) {
   body {
     padding: 0;
+    min-height: 100vh;
   }
 
   .container {
     grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr;
     height: 100vh;
     border-radius: 0;
+    max-width: 100%;
   }
 
+  /* Sidebar untuk mobile */
   .sidebar {
-    max-height: 50vh;
-    border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+    order: 2;
+    max-height: 40vh;
+    border-top: 2px solid rgba(255, 255, 255, 0.1);
+    border-bottom: none;
+    overflow-y: auto;
   }
 
+  .sidebar-header {
+    padding: 16px;
+  }
+
+  .sidebar-header h1 {
+    font-size: 18px;
+  }
+
+  .sidebar-header .icon {
+    width: 32px;
+    height: 32px;
+    font-size: 16px;
+  }
+
+  .sidebar-content {
+    padding: 12px 16px;
+  }
+
+  .login-form {
+    gap: 12px;
+  }
+
+  .form-group {
+    gap: 6px;
+  }
+
+  label {
+    font-size: 12px;
+  }
+
+  input, select, textarea {
+    padding: 10px 12px;
+    font-size: 14px;
+  }
+
+  button {
+    padding: 12px 20px;
+    font-size: 14px;
+  }
+
+  .info-box {
+    padding: 12px;
+    margin-top: 12px;
+  }
+
+  .info-box h4 {
+    font-size: 11px;
+    margin-bottom: 8px;
+  }
+
+  .info-box ol {
+    font-size: 11px;
+    line-height: 1.5;
+    padding-left: 16px;
+  }
+
+  .info-box li {
+    margin: 2px 0;
+  }
+
+  /* Keys section mobile */
+  .keys-section {
+    gap: 12px;
+  }
+
+  .key-card {
+    padding: 12px;
+  }
+
+  .key-card h3 {
+    font-size: 11px;
+  }
+
+  .key-value {
+    padding: 10px;
+    padding-right: 60px;
+    font-size: 10px;
+    min-height: 45px;
+  }
+
+  .copy-btn {
+    padding: 4px 8px;
+    font-size: 9px;
+    top: 8px;
+    right: 8px;
+  }
+
+  .user-badge {
+    padding: 12px;
+    margin-top: 8px;
+    gap: 10px;
+  }
+
+  .user-avatar {
+    width: 32px;
+    height: 32px;
+    font-size: 14px;
+  }
+
+  .user-info strong {
+    font-size: 13px;
+  }
+
+  .user-info small {
+    font-size: 11px;
+  }
+
+  .btn-secondary {
+    width: 100%;
+    font-size: 13px;
+  }
+
+  /* Main chat area mobile */
   .main-area {
-    min-height: 50vh;
+    order: 1;
+    min-height: 60vh;
+    overflow: hidden;
   }
 
-  .chat-header, .compose-area {
-    padding: 16px 20px;
+  #chat-section {
+    height: 100%;
+    max-height: 100%;
   }
 
+  .chat-header {
+    padding: 14px 16px;
+    gap: 10px;
+    min-height: auto;
+  }
+
+  .chat-header h2 {
+    font-size: 16px;
+    margin: 0;
+  }
+
+  .recipient-select {
+    gap: 8px;
+  }
+
+  .recipient-select .form-group {
+    margin: 0;
+  }
+
+  select {
+    padding: 8px 10px;
+    font-size: 13px;
+  }
+
+  .recipient-info {
+    padding: 8px 12px;
+    font-size: 11px;
+    border-radius: 6px;
+  }
+
+  .recipient-info strong {
+    display: block;
+    margin-bottom: 4px;
+  }
+
+  .recipient-info code {
+    font-size: 10px;
+  }
+
+  /* Messages area mobile */
   .messages-area {
-    padding: 16px 20px;
+    padding: 12px 16px;
+    flex: 1;
+    overflow-y: auto;
+    gap: 10px;
+  }
+
+  #inbox {
+    gap: 10px;
   }
 
   .message {
-    max-width: 85%;
+    max-width: 90%;
+    padding: 10px 12px;
+    border-radius: 12px;
+    font-size: 13px;
+  }
+
+  .message-header {
+    font-size: 12px;
+    margin-bottom: 4px;
+  }
+
+  .message-content {
+    font-size: 13px;
+    line-height: 1.4;
+  }
+
+  .message-meta {
+    margin-top: 6px;
+    padding-top: 6px;
+    font-size: 10px;
+  }
+
+  .decrypt-badge {
+    padding: 3px 6px;
+    font-size: 10px;
+    margin-bottom: 4px;
+  }
+
+  /* Compose area mobile */
+  .compose-area {
+    padding: 12px 16px;
+    border-top: 2px solid #e2e8f0;
+  }
+
+  .compose-form {
+    gap: 10px;
+  }
+
+  .compose-form .form-group {
+    margin: 0;
+    gap: 6px;
+  }
+
+  textarea {
+    min-height: 60px;
+    padding: 10px 12px;
+    font-size: 13px;
+  }
+
+  .send-btn {
+    align-self: flex-end;
+    padding: 10px 20px;
+    font-size: 13px;
+  }
+
+  .empty-state {
+    padding: 40px 20px;
+  }
+
+  .empty-state .icon {
+    font-size: 48px;
+    margin-bottom: 12px;
+  }
+
+  .empty-state h3 {
+    font-size: 18px;
+    margin-bottom: 6px;
+  }
+
+  .empty-state p {
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 480px) {
+  .container {
+    grid-template-rows: auto 1fr;
+  }
+
+  .sidebar {
+    max-height: 35vh;
+  }
+
+  .main-area {
+    min-height: 65vh;
+  }
+
+  .sidebar-header h1 {
+    font-size: 16px;
+  }
+
+  .message {
+    max-width: 95%;
+    font-size: 12px;
+  }
+
+  .message-content {
+    font-size: 12px;
+  }
+
+  button {
+    padding: 10px 16px;
+    font-size: 13px;
+  }
+
+  .chat-header h2 {
+    font-size: 14px;
   }
 }
 
