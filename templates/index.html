@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>DES Chat - Server-side Encryption</title>
+  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+  <script src="/static/script.js" defer></script>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      margin: 20px;
+      max-width: 900px;
+      line-height: 1.6;
+    }
+    
+    input, select, textarea, button {
+      font-family: inherit;
+      font-size: 14px;
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      margin: 4px 0;
+    }
+    
+    button {
+      background-color: #007bff;
+      color: white;
+      cursor: pointer;
+      border: none;
+      padding: 8px 16px;
+      transition: background-color 0.2s;
+    }
+    
+    button:hover {
+      background-color: #0056b3;
+    }
+    
+    button:active {
+      background-color: #004494;
+    }
+    
+    input, select {
+      width: 100%;
+      max-width: 300px;
+    }
+    
+    textarea {
+      width: 100%;
+      resize: vertical;
+    }
+    
+    #inbox {
+      border: 1px solid #ddd;
+      padding: 10px;
+      height: 300px;
+      overflow-y: auto;
+      background: #fafafa;
+      border-radius: 4px;
+      margin-top: 10px;
+    }
+    
+    .msg {
+      margin-bottom: 12px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #e0e0e0;
+    }
+    
+    .msg:last-child {
+      border-bottom: none;
+    }
+    
+    .msg b {
+      color: #007bff;
+    }
+    
+    .msg small {
+      color: #666;
+      font-size: 0.85em;
+      word-break: break-all;
+    }
+    
+    h2, h3 {
+      margin-top: 0;
+    }
+    
+    .info-text {
+      font-size: 0.9em;
+      color: #666;
+      margin-top: 8px;
+    }
+    
+    .user-info {
+      background-color: #f0f0f0;
+      padding: 10px;
+      border-radius: 4px;
+      margin-bottom: 15px;
+    }
+    
+    .form-group {
+      margin-bottom: 15px;
+    }
+    
+    label {
+      display: block;
+      margin-bottom: 4px;
+      font-weight: 500;
+    }
+  </style>
+</head>
+<body>
+  <h2>DES Chat – Server-side Encryption</h2>
+
+  <div id="login">
+    <div class="form-group">
+      <label for="username">Username</label>
+      <input id="username" placeholder="Masukkan username" autocomplete="username"/>
+    </div>
+    
+    <div class="form-group">
+      <label for="key">DES Key (max 8 characters)</label>
+      <input id="key" type="password" placeholder="Masukkan kunci DES" autocomplete="off" maxlength="8"/>
+    </div>
+    
+    <button id="btnRegister">Register</button>
+    
+    <p class="info-text">
+      Keys dan enkripsi DES diproses di server (DES.py). 
+      Server akan melakukan enkripsi untuk penerima pesan.
+    </p>
+  </div>
+
+  <div id="chat" style="display:none;">
+    <div class="user-info">
+      Logged in as <b id="me"></b> – 
+      <button id="btnLogout">Logout</button>
+    </div>
+
+    <div class="form-group">
+      <label for="users">Kirim ke:</label>
+      <select id="users"></select>
+    </div>
+
+    <div class="form-group">
+      <label for="message">Pesan:</label>
+      <textarea id="message" rows="3" placeholder="Tulis pesan... (Ctrl+Enter untuk kirim)"></textarea>
+      <button id="btnSend">Send</button>
+    </div>
+
+    <h3>Inbox</h3>
+    <div id="inbox"></div>
+  </div>
+</body>
+</html>
