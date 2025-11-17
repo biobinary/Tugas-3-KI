@@ -1,6 +1,5 @@
 import eventlet
-from DES import encrypt_buffer, decrypt_buffer, pad_text
-from RSA import generate_keypair, encrypt_rsa, decrypt_rsa, key_to_string, string_to_key
+from RSA import key_to_string, string_to_key 
 import secrets
 import string
 
@@ -25,24 +24,32 @@ def index():
 
 @socketio.on('register')
 def handle_register(data):
+
     username = data.get('username')
+    public_key_str = data.get('public_key') 
     sid = request.sid
     
     if not username:
         emit('register_response', {'ok': False, 'error': 'username required'})
+        return
+        
+    if not public_key_str:
+        emit('register_response', {'ok': False, 'error': 'public key required'})
         return
     
     if username in users:
         emit('register_response', {'ok': False, 'error': 'username already taken'})
         return
 
-    print(f"[REGISTER] Generating RSA keypair for {username}...")
-    public_key, private_key = generate_keypair(bits=16)
-    
+    try:
+        public_key = string_to_key(public_key_str)
+    except Exception as e:
+        emit('register_response', {'ok': False, 'error': 'invalid public key format'})
+        return
+
     users[username] = {
         'sid': sid,
-        'public_key': public_key,
-        'private_key': private_key
+        'public_key': public_key
     }
     
     join_room(username)
@@ -51,8 +58,6 @@ def handle_register(data):
     
     emit('register_response', {
         'ok': True,
-        'public_key': key_to_string(public_key),
-        'private_key': key_to_string(private_key)
     })
 
     print(f"[REGISTER] {username} (sid={sid})")
@@ -60,34 +65,25 @@ def handle_register(data):
 
 @socketio.on('send_message') 
 def handle_send_message(data):
-
+    
     frm = data.get('from')
     to = data.get('to')
-    plaintext = data.get('message')
+    
+    encrypted_key = data.get('encrypted_key')
+    ciphertext = data.get('ciphertext')
 
-    if not frm or not to or plaintext is None:
+    if not frm or not to or not encrypted_key or not ciphertext:
         emit('send_ack', {'ok': False, 'error': 'bad payload'})
         return
 
     if to not in users or frm not in users:
         emit('send_ack', {'ok': False, 'error': 'sender/recipient offline or unknown'})
         return
-    
-    des_key = generate_random_key(8)
-    print(f"[ENCRYPT] Generated DES key: {des_key}")
-    
-    recipient_public_key = users[to]['public_key']
-    encrypted_des_key = encrypt_rsa(des_key, recipient_public_key)
-    print(f"[ENCRYPT] Encrypted DES key with recipient's public key")
-    
-    ciphertext = encrypt_buffer(plaintext, des_key)
-    print(f"[ENCRYPT] Encrypted message with DES")
-    
+
     socketio.emit('receive_message', {
         'from': frm,
-        'encrypted_key': encrypted_des_key,
+        'encrypted_key': encrypted_key,
         'ciphertext': ciphertext,
-        'plaintext': None
     }, room=to)
 
     emit('send_ack', {'ok': True})
