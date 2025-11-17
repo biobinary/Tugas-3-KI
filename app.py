@@ -1,14 +1,17 @@
 import eventlet
-from RSA import key_to_string, string_to_key 
+from static.RSA import key_to_string, string_to_key 
 import secrets
 import string
 
 eventlet.monkey_patch()
 
-from flask import Flask, render_template, request
-from flask_socketio import SocketIO, emit, join_room, leave_room    
+from flask import Flask, render_template, request, send_from_directory
+from flask_socketio import SocketIO, emit, join_room, leave_room
+from flask_cors import CORS
 
 app = Flask(__name__)
+CORS(app)
+
 app.config['SECRET_KEY'] = 'replace-this-secret'
 socketio = SocketIO(app, cors_allowed_origins="*")
 
@@ -17,6 +20,10 @@ users = {}
 def generate_random_key(length=8):
     chars = string.ascii_letters + string.digits
     return ''.join(secrets.choice(chars) for _ in range(length))
+
+@app.route('/static/<path:filename>')
+def static_files(filename):
+    return send_from_directory(app.static_folder, filename)
 
 @app.route('/')
 def index():
