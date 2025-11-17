@@ -7,32 +7,41 @@
   const FP = [40,8,48,16,56,24,64,32,39,7,47,15,55,23,63,31,38,6,46,14,54,22,62,30,37,5,45,13,53,21,61,29,36,4,44,12,52,20,60,28,35,3,43,11,51,19,59,27,34,2,42,10,50,18,58,26,33,1,41,9,49,17,57,25];
 
   function modPow(base, exp, mod) {
-    let result = 1;
-    base = base % mod;
-    while (exp > 0) {
-      if (exp % 2 === 1) {
-        result = (result * base) % mod;
+    
+    let b = BigInt(base);
+    let e = BigInt(exp);
+    let m = BigInt(mod);
+    
+    let result = BigInt(1);
+    b = b % m;
+    while (e > BigInt(0)) {
+      if (e % BigInt(2) === BigInt(1)) {
+        result = (result * b) % m;
       }
-      exp = Math.floor(exp / 2);
-      base = (base * base) % mod;
+      e = e / BigInt(2);
+      b = (b * b) % m;
     }
-    return result;
+    return Number(result);
   }
   crypto.modPow = modPow;
 
   function gcd(a, b) {
-    while (b) {
+    a = BigInt(a);
+    b = BigInt(b);
+    while (b !== BigInt(0)) {
       [a, b] = [b, a % b];
     }
-    return a;
+    return Number(a);
   }
 
   function extended_gcd(a, b) {
-    if (a === 0) {
-      return [b, 0, 1];
+    a = BigInt(a);
+    b = BigInt(b);
+    if (a === BigInt(0)) {
+      return [Number(b), 0, 1];
     }
-    const [gcd_val, x1, y1] = extended_gcd(b % a, a);
-    const x = y1 - Math.floor(b / a) * x1;
+    const [gcd_val, x1, y1] = extended_gcd(Number(b % a), Number(a));
+    const x = y1 - Math.floor(Number(b) / Number(a)) * x1;
     const y = x1;
     return [gcd_val, x, y];
   }
@@ -42,7 +51,10 @@
     if (gcd_val !== 1) {
       throw new Error("Modular inverse does not exist");
     }
-    return (x % phi + phi) % phi;
+    let result = (x % phi + phi) % phi;
+
+    while (result < 0) result += phi;
+    return Math.floor(result);
   }
 
   function _randRange(min, max) {
@@ -161,9 +173,9 @@
   }
 
   function xor(a, b) {
+    const minLen = Math.min(a.length, b.length);
     let result = '';
-    const len = Math.min(a.length, b.length);
-    for (let i = 0; i < len; i++) {
+    for (let i = 0; i < minLen; i++) {
       result += a[i] === b[i] ? '0' : '1';
     }
     return result;
@@ -177,10 +189,11 @@
   }
 
   function simpleRoundFunc(block, keyBits) {
-    return xor(block, keyBits); 
+    return xor(block, keyBits.substr(0, block.length)); 
   }
 
-  function desBlockProcess(blockBits, keyBits) {
+  function desEncryptBlock(blockBits, keyBits) {
+
     let permuted = '';
     for (let i of IP) {
       permuted += blockBits[i - 1] || '0';
@@ -203,6 +216,30 @@
     return output;
   }
 
+  function desDecryptBlock(blockBits, keyBits) {
+    
+    let permuted = '';
+    for (let i of IP) {
+      permuted += blockBits[i - 1] || '0';
+    }
+    let left = permuted.substr(0, 32);
+    let right = permuted.substr(32);
+
+    for (let i = 0; i < 16; i++) {
+      const roundKey = keyBits.repeat(Math.ceil(32 / keyBits.length)).substr(0, 32);
+      let newRight = xor(left, simpleRoundFunc(right, roundKey));
+      left = right;
+      right = newRight;
+    }
+
+    let preOutput = right + left;
+    let output = '';
+    for (let i of FP) {
+      output += preOutput[i - 1] || '0';
+    }
+    return output;
+  }
+
   crypto.encryptDES = function(plaintext, key) {
     plaintext = padText(plaintext);
     key = padText(key).substr(0, 8);
@@ -211,7 +248,7 @@
     for (let i = 0; i < plaintext.length; i += 8) {
       const block = plaintext.substr(i, 8);
       const blockBits = textToBits(block);
-      const encBits = desBlockProcess(blockBits, keyBits);
+      const encBits = desEncryptBlock(blockBits, keyBits);
       ciphertext += bitsToText(encBits);
     }
     return ciphertext;
@@ -224,7 +261,7 @@
     for (let i = 0; i < ciphertext.length; i += 8) {
       const block = ciphertext.substr(i, 8);
       const blockBits = textToBits(block);
-      const decBits = desBlockProcess(blockBits, keyBits);
+      const decBits = desDecryptBlock(blockBits, keyBits);
       plaintext += bitsToText(decBits);
     }
     return plaintext.trim();
@@ -251,6 +288,14 @@
     }
     return result;
   }
+
+  // Debug / Test functions (Delete later maybe??)
+  crypto._textToBits = textToBits;
+  crypto._bitsToText = bitsToText;
+  crypto._xor = xor;
+  crypto._padText = padText;
+  crypto._desEncryptBlock = desEncryptBlock;
+  crypto._desDecryptBlock = desDecryptBlock;
 
   window.appCrypto = crypto;
 

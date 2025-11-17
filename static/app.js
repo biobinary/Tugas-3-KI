@@ -130,12 +130,16 @@ function sendMessage() {
 
     const desCiphertext = crypto.encryptDES(msg, desKey);
     console.log("Ciphertext (dengan DES):", desCiphertext.substring(0, 20) + "...");
+    
+    // Convert ciphertext to array of byte codes for safe JSON transmission
+    const ciphertextBytes = Array.from(desCiphertext).map(c => c.charCodeAt(0));
+    console.log("Ciphertext bytes:", ciphertextBytes);
 
     socket.emit('send_message', { 
       from: username, 
       to: to, 
       encrypted_key: encryptedDesKey,
-      ciphertext: desCiphertext     
+      ciphertext: ciphertextBytes     // Send as array instead of string
     });
     
     elements.message.value = '';
@@ -229,17 +233,31 @@ socket.on('send_ack', (data) => {
 socket.on('receive_message', (data) => {
   const { from, encrypted_key, ciphertext } = data;
   console.log('📨 Received message from:', from);
+  console.log('Received ciphertext type:', typeof ciphertext);
+  console.log('Received ciphertext:', ciphertext);
   
   try {
 
     const desKey = crypto.decryptRSA(encrypted_key, privateKey);
     console.log('🔓 Decrypted DES key:', desKey);
     
-    const plaintext = crypto.decryptDES(ciphertext, desKey);
+    // Convert array of bytes back to string if needed
+    let ciphertextStr = ciphertext;
+    if (Array.isArray(ciphertext)) {
+      ciphertextStr = String.fromCharCode(...ciphertext);
+      console.log('Converted ciphertext from array to string');
+    }
+    
+    console.log('Ciphertext (string):', ciphertextStr);
+    const plaintext = crypto.decryptDES(ciphertextStr, desKey);
     console.log('📝 Decrypted message:', plaintext);
 
     const msgDiv = document.createElement('div');
     msgDiv.className = 'message received card bg-light border-start border-success border-3 p-3';
+    
+    const ciphertextDisplay = Array.isArray(ciphertext) 
+      ? JSON.stringify(ciphertext.slice(0, 5)) + '...'
+      : ciphertext.substring(0, 40) + (ciphertext.length > 40 ? '...' : '');
     
     msgDiv.innerHTML = `
       <div class="badge bg-success mb-2"><i class="bi bi-check-lg"></i> ✅ Decrypted</div>
@@ -247,7 +265,7 @@ socket.on('receive_message', (data) => {
       <div class="message-content mb-2">${escapeHtml(plaintext)}</div>
       <div class="small text-muted">
         <div>DES Key (encrypted): ${JSON.stringify(encrypted_key.slice(0, 3))}...</div>
-        <div>Ciphertext: ${ciphertext.substring(0, 40)}${ciphertext.length > 40 ? '...' : ''}</div>
+        <div>Ciphertext: ${ciphertextDisplay}</div>
       </div>
     `;
     
@@ -255,7 +273,7 @@ socket.on('receive_message', (data) => {
     while (elements.inbox.children.length > 50) {
       elements.inbox.removeChild(elements.inbox.lastChild);
     }
-    
+
   } catch (error) {
   
     console.error('❌ Decryption failed:', error);
