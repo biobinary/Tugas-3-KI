@@ -1,7 +1,3 @@
-# DES.py
-# Implementasi sederhana DES (Data Encryption Standard)
-# hanya untuk pembelajaran (tidak untuk keamanan nyata)
-
 from itertools import cycle
 
 # --- Permutasi & konstanta DES ---
